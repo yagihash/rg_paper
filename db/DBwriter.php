@@ -67,7 +67,7 @@ class DBwriter {
     $this -> transactQuery(function() {
       $table = $this -> link -> real_escape_string($table);
       $columns = $this -> link -> real_escape_string($column);
-      $stmt = $this -> link -> prepare("UPDATE $table SET $column=? WHERE id=?");
+      $stmt = $this -> link -> prepare("UPDATE `$table` SET `$column`=? WHERE `id`=?");
       $stmt -> bind_param("si", $value, $id);
       $stmt -> execute();
       $stmt -> close();
@@ -79,63 +79,130 @@ class DBwriter {
   /**
    * ユーザを追加する。
    *
-   * @param array $user username, passwordを含む連想配列
+   * @param array $user login_name, name_ja, name_en, belongを含む連想配列
    */
   public function addUser($user) {
     $this -> transactQuery(function() {
       // ユーザ名のチェック → 英数字アンダースコア3-12文字 && 未使用
-      if (!isset($user["username"])) {
-        throw new Exception("ユーザ名は必須項目です。");
-      } else if (!preg_match("/^[a-zA-Z0-9_]{3,12}$/", $user["username"])) {
-        throw new Exception("英数字アンダースコアで構成される3字以上12文字以下のユーザ名を指定してください。");
+      if (!isset($user["login_name"])) {
+        throw new Exception("Login name is required.");
+      } else if (!preg_match("/^[a-zA-Z0-9]{3,12}$/", $user["login_name"])) {
+        throw new Exception("Enter a valid login name");
       } else if ($this -> reader -> does_exist_user($user["username"])) {
-        throw new Exception("このユーザ名は既に使用されています。");
+        // TODO: あとで考える
       } else {
-        $username = $user["username"];
+        $login_name = $user["login_name"];
       }
-      /** /
-       // スクリーンネームのチェック → 1-30文字 && 制御文字はストリップ
-       if (!isset($user["screenname"])) {
-       throw new Exception("スクリーンネームは必須項目です。");
-       } else if (!preg_match("/.+{1,30}/", $user["screenname"])) {
-       throw new Exception("スクリーンネームは30字までです。");
-       } else {
-       $screenname = preg_replace("/[\x00-\x1f\x7f]/", "", $user["screenname"]);
-       }
 
-       // 性別のチェック → 0: 非公開, 1: 男性, 2: 女性
-       if (!isset($user["gender"])) {
-       throw new Exception("性別は必須項目です。");
-       } else if (is_numeric($user["gender"]) and $user["gender"] >= 0 and $user["gender"] < 3) {
-       $gender = $user["gender"];
-       } else {
-       throw new Exception("正しい性別を入力してください。");
-       }
-
-       // メールアドレスのチェック → 適当に…
-       // cited from http://hello.lumiere-couleur.com/smilkobuta/2010/12/03/%E3%80%8Cphp%E4%BD%BF%E3%81%84%E3%81%AF%E3%82%82%E3%81%86%E6%AD%A3%E8%A6%8F%E8%A1%A8%E7%8F%BE%E3%82%92blog%E3%81%AB%E6%9B%B8%E3%81%8F%E3%81%AA%E3%80%8D%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2/
-       if (!isset($user["email"])) {
-       throw new Exception("メールアドレスは必須項目です。");
-       } elseif (!preg_match('/^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:"(?:\\[^\r\n]|[^\\"])*")))\@(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$/', $email)) {
-       throw new Exception("正しいメールアドレスを入力してください。");
-       } else {
-       $email = $user["email"];
-       }
-       /**/
-       
-      // パスワードのチェック → 英数字記号のみ8文字以上
-      if (!isset($user["password"])) {
-        throw new Exception("パスワードは必須項目です。");
-      } else if (!preg_match("/[\@-\~]/", $user["password"])) {
-        throw new Exception("パスワードに使用できない文字が指定されています。英数字および記号のみを使用してください。");
-      } else if (strlen($user["password"] < 8)) {
-        throw new Exception("パスワードは8文字以上のものを入力してください。");
+      // 氏名(日本語)のチェック
+      if (!isset($user["name_ja"])) {
+        $name_ja = "";
+      } else if (strlen($user["name_ja"]) > 50) {
+        throw new Exception("Name(ja) is too long.");
       } else {
-        $salt = bin2hex(openssl_random_pseudo_bytes(40));
-        $password = hash("sha256", $salt . $user["password"]);
+        $name_ja = $user["name_ja"];
       }
-      $stmt = $this -> link -> prepare("INSERT INTO users(username, screenname, gender, email, password, salt)");
-      $stmt -> bind_param("ssssss", $username, $screenname, $gender, $email, $password, $salt);
+
+      // 氏名(英語)のチェック
+      if (!isset($user["name_en"])) {
+        $name_en = "";
+      } else if (strlen($user["name_en"]) > 50) {
+        throw new Exception("Name(en) is too long.");
+      } else {
+        $name_en = $user["name_en"];
+      }
+
+      // 所属のチェック
+      if (!isset($user["belong"])) {
+        throw new Exception("The information about faculty/course which you belong to.");
+      } else if (strlen($user["belong"]) > 50) {
+        throw new Exception("Your faculty/course name is too long.");
+      } else {
+        $belong = $user["belong"];
+      }
+
+      $stmt = $this -> link -> prepare("INSERT INTO `users` (`login_name`, `name_ja`, `name_en`, `belong`) VALUES(?, ?, ?, ?)");
+      $stmt -> bind_param("ssss", $login_name, $name_ja, $name_en, $belong);
+      $stmt -> execute();
+      $stmt -> close();
+    });
+  }
+
+  /**
+   * 論文を追加する。
+   *
+   * @param array $paper class, title_ja, title_en, file, description_ja, description_en, keywords, mailを含む連想配列
+   */
+  public function addPaper($paper) {
+    $this -> transactQuery(function() {
+      // 論文種別のチェック
+      if (!isset($paper["class"])) {
+        throw new Exception("The class of paper is required. Bachelar/Master/Doctor thesis or Other paper(with pear review or not)");
+      } else {
+        $class = $paper["class"];
+      }
+
+      // タイトル(日本語)のチェック
+      if (!isset($paper["title_ja"])) {
+        $title_ja = "";
+      } else if (strlen($paper["title_ja"]) > 256) {
+        throw new Exception("The Japanese title is too long.");
+      } else {
+        $title_ja = $paper["title_ja"];
+      }
+
+      // タイトル(英語)のチェック
+      if (!isset($paper["title_en"])) {
+        $title_en = "";
+      } else if (strlen($paper["title_en"]) > 256) {
+        throw new Exception("The English title is too long.");
+      } else {
+        $title_en = $paper["title_en"];
+      }
+
+      // ファイルのチェック
+      // TODO: is_pdf, !is_array, もろもろ。受け渡しの方法も。
+
+      // 概要(日本語)のチェック
+      if (!isset($paper["description_ja"])) {
+        $description_ja = "";
+      } else if (strlen($paper["description_ja"]) > 2000) {
+        throw new Exception("The Japanse description is too long.");
+      } else {
+        $description_ja = $paper["description_ja"];
+      }
+
+      // 概要(英語)のチェック
+      if (!isset($paper["description_en"])) {
+        $description_en = "";
+      } else if (strlen($paper["description_en"]) > 2000) {
+        throw new Exception("The English description is too long");
+      } else {
+        $description_en = $paper["description_en"];
+      }
+
+      // キーワードのチェック
+      if (!isset($paper["keywords"])) {
+        throw new Exception("Keywords are required.");
+      } else if (count($paper["keywords"]) < 4) {
+        throw new Exception("Four keywords are required at least.");
+      } else if (count($paper["keywords"]) > 6) {
+        throw new Exception("Too many keywords are posted.");
+      } else {
+        $keywords = serialize($paper["keywords"]);
+      }
+
+      // 連絡先のチェック
+      if (!isset($paper["mail"])) {
+        throw new Exception("Mail address is required.");
+      } else if (strlen($paper["mail"]) > 256) {
+        throw new Exception("Mail address is too long.");
+      } else {
+        $mail = $paper["mail"];
+      }
+
+      $stmt = $this -> link -> prepare("INSERT INTO `papers` (`class`, `title_ja`, `title_en`, `description_ja`, `description_en`, `keywords`, `mail`) VALUES(?, ?, ?, ?, ?, ?, ?)");
+      $stmt -> bind_param("sssssss", $class, $title_ja, $title_en, $description_ja, $description_en, $keywords, $mail);
       $stmt -> execute();
       $stmt -> close();
     });
