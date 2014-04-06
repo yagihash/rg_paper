@@ -25,7 +25,7 @@ class DBreader {
   /**
    * Thanks for http://www.akiyan.com/blog/archives/2011/07/php-mysqli-fetchall.html
    */
-  function fetchAll(&$stmt) {
+  protected function fetchAll(&$stmt) {
     $hits = array();
     $params = array();
     $meta = $stmt -> result_metadata();
@@ -43,13 +43,13 @@ class DBreader {
     return $hits;
   }
 
-  protected function getData($id, $table, $column) {
+  protected function getData($needle, $table, $column) {
     $table = $this -> link -> real_escape_string($table);
     $column = $this -> link -> real_escape_string($column);
     $stmt = $this -> link -> prepare("SELECT * FROM `$table` WHERE `$column`=?");
-    $stmt -> bind_param("i", $id);
+    $stmt -> bind_param("i", $needle);
     $stmt -> execute();
-    $result = $this -> fetch_all($stmt);
+    $result = $this -> fetchAll($stmt);
     $stmt -> close();
     return $result;
   }
@@ -59,9 +59,9 @@ class DBreader {
     return $result;
   }
   
-  public function doesExistUser($username) {
+  public function doesExistsUser($login_name) {
     $stmt = $this -> link -> prepare("SELECT `id` FROM `users` WHERE `login_name`=?");
-    $stmt -> bind_param("i", $planid);
+    $stmt -> bind_param("s", $login_name);
     $stmt -> execute();
     $stmt -> bind_result($result);
     $stmt -> fetch();
@@ -70,6 +70,10 @@ class DBreader {
       return true;
     else
       return false;
+  }
+  
+  public function getUserId($login_name) {
+    return $this -> getData($login_name, "users", "login_name");
   }
 
 }

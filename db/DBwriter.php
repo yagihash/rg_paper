@@ -22,7 +22,7 @@ class DBwriter {
 
     // オートコミットオフ
     // transactQueryにクエリを投げる関数をぶん投げてあげるように
-    $this -> link -> autocommit(false);
+    // $this -> link -> autocommit(false);
 
     $this -> reader = new DBreader($host, $user, $pass, $db);
   }
@@ -33,11 +33,12 @@ class DBwriter {
 
   protected function transactQuery(callable $func) {
     try {
-      $this -> link -> begin_transaction();
+      // $this -> link -> begin_transaction();
       $func();
-      $this -> link -> commit();
+      // $this -> link -> commit();
+      return true;
     } catch(Exception $e) {
-      $this -> link -> rollback();
+      // $this -> link -> rollback();
       return $e -> getMessage();
     }
   }
@@ -45,7 +46,7 @@ class DBwriter {
   /**
    * Thanks for http://www.akiyan.com/blog/archives/2011/07/php-mysqli-fetchall.html
    */
-  function fetchAll(&$stmt) {
+  protected function fetchAll(&$stmt) {
     $hits = array();
     $params = array();
     $meta = $stmt -> result_metadata();
@@ -61,6 +62,11 @@ class DBwriter {
       $hits[] = $c;
     }
     return $hits;
+  }
+
+  protected function isInvalidKeyword($s) {
+    $s = str_replace("　", "", $s);
+    return $s === "" or ctype_space($s);
   }
 
   protected function updateData($id, $table, $column, $value) {
@@ -82,20 +88,23 @@ class DBwriter {
    * @param array $user login_name, name_ja, name_en, belongを含む連想配列
    */
   public function addUser($user) {
-    $this -> transactQuery(function() {
-      // ユーザ名のチェック → 英数字アンダースコア3-12文字 && 未使用
-      if (!isset($user["login_name"])) {
+    return $this -> transactQuery(function() {
+      global $user;
+      // ユーザ名のチェック → 英数字3-12文字 && 未使用
+      if (!isset($user["login_name"]) or $user["login_name"] === false) {
         throw new Exception("Login name is required.");
       } else if (!preg_match("/^[a-zA-Z0-9]{3,12}$/", $user["login_name"])) {
         throw new Exception("Enter a valid login name");
-      } else if ($this -> reader -> does_exist_user($user["username"])) {
-        // TODO: あとで考える
+      } else if ($this -> reader -> doesExistsUser($user["login_name"])) {
+        $login_name = $user["login_name"];
+        $doesExistsUser = true;
       } else {
         $login_name = $user["login_name"];
+        $doesExistsUser = false;
       }
 
       // 氏名(日本語)のチェック
-      if (!isset($user["name_ja"])) {
+      if (!isset($user["name_ja"]) or $user["name_ja"] === false) {
         $name_ja = "";
       } else if (strlen($user["name_ja"]) > 50) {
         throw new Exception("Name(ja) is too long.");
@@ -104,7 +113,7 @@ class DBwriter {
       }
 
       // 氏名(英語)のチェック
-      if (!isset($user["name_en"])) {
+      if (!isset($user["name_en"]) or $user["name_en"] === false) {
         $name_en = "";
       } else if (strlen($user["name_en"]) > 50) {
         throw new Exception("Name(en) is too long.");
@@ -113,7 +122,7 @@ class DBwriter {
       }
 
       // 所属のチェック
-      if (!isset($user["belong"])) {
+      if (!isset($user["belong"]) or $user["belong"] === false) {
         throw new Exception("The information about faculty/course which you belong to.");
       } else if (strlen($user["belong"]) > 50) {
         throw new Exception("Your faculty/course name is too long.");
@@ -121,9 +130,30 @@ class DBwriter {
         $belong = $user["belong"];
       }
 
-      $stmt = $this -> link -> prepare("INSERT INTO `users` (`login_name`, `name_ja`, `name_en`, `belong`) VALUES(?, ?, ?, ?)");
-      $stmt -> bind_param("ssss", $login_name, $name_ja, $name_en, $belong);
+      // 連絡先のチェック
+      if (!isset($user["mail"]) or $user["mail"] === false) {
+        throw new Exception("Mail address is required.");
+      } else if (strlen($user["mail"]) > 256) {
+        throw new Exception("Mail address is too long.");
+      } else if (!preg_match('/^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:"(?:\\[^\r\n]|[^\\"])*")))\@(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$/', $user["mail"])) {
+        throw new Exception("Invalid mail address format.");
+      } else {
+        $mail = $user["mail"];
+      }
+
+      if ($doesExistsUser) {
+        $stmt = $this -> link -> prepare("UPDATE `users` SET `name_ja`=?, `name_en`=?, `belong`=?, `mail`=? WHERE `login_name`=?");
+        $stmt -> bind_param("sssss", $name_ja, $name_en, $belong, $mail, $login_name);
+      } else {
+        $stmt = $this -> link -> prepare("INSERT INTO `users` (`login_name`, `name_ja`, `name_en`, `belong`, `mail`) VALUES(?, ?, ?, ?, ?)");
+        $stmt -> bind_param("sssss", $login_name, $name_ja, $name_en, $belong, $mail);
+      }
       $stmt -> execute();
+      if ($stmt -> error !== "") {
+        $msg = $stmt -> error;
+        $stmt -> close();
+        throw new Exception($msg);
+      }
       $stmt -> close();
     });
   }
@@ -131,19 +161,27 @@ class DBwriter {
   /**
    * 論文を追加する。
    *
-   * @param array $paper class, title_ja, title_en, file, description_ja, description_en, keywords, mailを含む連想配列
+   * @param array $paper user_id, class, title_ja, title_en, file, description_ja, description_en, keywords, mailを含む連想配列
    */
   public function addPaper($paper) {
-    $this -> transactQuery(function() {
+    return $this -> transactQuery(function() {
+      global $paper;
+      // ユーザIDのチェック
+      if (!isset($paper["user_id"])) {
+        throw new Exception("User ID isn't in array.");
+      } else {
+        $user_id = $paper["user_id"];
+      }
+      
       // 論文種別のチェック
-      if (!isset($paper["class"])) {
+      if (!isset($paper["class"]) or $paper["class"] === false) {
         throw new Exception("The class of paper is required. Bachelar/Master/Doctor thesis or Other paper(with pear review or not)");
       } else {
         $class = $paper["class"];
       }
 
       // タイトル(日本語)のチェック
-      if (!isset($paper["title_ja"])) {
+      if (!isset($paper["title_ja"]) or $paper["title_ja"] === false) {
         $title_ja = "";
       } else if (strlen($paper["title_ja"]) > 256) {
         throw new Exception("The Japanese title is too long.");
@@ -152,7 +190,7 @@ class DBwriter {
       }
 
       // タイトル(英語)のチェック
-      if (!isset($paper["title_en"])) {
+      if (!isset($paper["title_en"]) or $paper["title_en"] === false) {
         $title_en = "";
       } else if (strlen($paper["title_en"]) > 256) {
         throw new Exception("The English title is too long.");
@@ -162,9 +200,26 @@ class DBwriter {
 
       // ファイルのチェック
       // TODO: is_pdf, !is_array, もろもろ。受け渡しの方法も。
+      $file = $paper["file"];
+      $finfo = new finfo(FILEINFO_MIME_TYPE);
+      $type = $finfo -> file($file['tmp_name']);
+      if (!isset($file['error']) or !is_int($file['error'])) {
+        throw new Exception("An error occured in file uploading.");
+      } else if (!preg_match("/^application\/pdf/", $type)) {
+        throw new Exception("Only pdf file can be accepted.");
+      } else if ($file['size'] > 1000000) {
+        throw new Exception("Uploaded file is too large.");
+      } else {
+        if (move_uploaded_file($file["tmp_name"], ($file_path = "./files/" . bin2hex(openssl_random_pseudo_bytes(32)) . ".pdf"))) {
+          chmod($file_path, 0644);
+          $file_name = basename($file_path);
+        } else {
+          throw new Exception("An error occured in saving file.");
+        }
+      }
 
       // 概要(日本語)のチェック
-      if (!isset($paper["description_ja"])) {
+      if (!isset($paper["description_ja"]) or $paper["description_ja"] === false) {
         $description_ja = "";
       } else if (strlen($paper["description_ja"]) > 2000) {
         throw new Exception("The Japanse description is too long.");
@@ -173,7 +228,7 @@ class DBwriter {
       }
 
       // 概要(英語)のチェック
-      if (!isset($paper["description_en"])) {
+      if (!isset($paper["description_en"]) or $paper["description_en"] === false) {
         $description_en = "";
       } else if (strlen($paper["description_en"]) > 2000) {
         throw new Exception("The English description is too long");
@@ -182,9 +237,14 @@ class DBwriter {
       }
 
       // キーワードのチェック
-      if (!isset($paper["keywords"])) {
+      if (!isset($paper["keywords"]) or $paper["keywords"] === false) {
         throw new Exception("Keywords are required.");
-      } else if (count($paper["keywords"]) < 4) {
+      }
+      foreach ($paper["keywords"] as $key => $value) {
+        if ($this -> isInvalidKeyword($value))
+          unset($paper["keywords"][$key]);
+      }
+      if (count($paper["keywords"]) < 4) {
         throw new Exception("Four keywords are required at least.");
       } else if (count($paper["keywords"]) > 6) {
         throw new Exception("Too many keywords are posted.");
@@ -192,20 +252,15 @@ class DBwriter {
         $keywords = serialize($paper["keywords"]);
       }
 
-      // 連絡先のチェック
-      if (!isset($paper["mail"])) {
-        throw new Exception("Mail address is required.");
-      } else if (strlen($paper["mail"]) > 256) {
-        throw new Exception("Mail address is too long.");
-      } else if (!preg_match('/^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:"(?:\\[^\r\n]|[^\\"])*")))\@(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$/', $paper["mail"])) {
-        throw new Exception("Invalid mail address format.");
-      } else {
-        $mail = $paper["mail"];
-      }
-
-      $stmt = $this -> link -> prepare("INSERT INTO `papers` (`class`, `title_ja`, `title_en`, `description_ja`, `description_en`, `keywords`, `mail`) VALUES(?, ?, ?, ?, ?, ?, ?)");
-      $stmt -> bind_param("sssssss", $class, $title_ja, $title_en, $description_ja, $description_en, $keywords, $mail);
+      $stmt = $this -> link -> prepare("INSERT INTO `papers` (`user_id`, `class`, `title_ja`, `title_en`, `description_ja`, `description_en`, `keywords`, `file_name`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+      $stmt -> bind_param("isssssss", $user_id, $class, $title_ja, $title_en, $description_ja, $description_en, $keywords, $file_name);
       $stmt -> execute();
+      if ($stmt -> error !== "") {
+        unlink($file_path);
+        $msg = $stmt -> error;
+        $stmt -> close();
+        throw new Exception($msg);
+      }
       $stmt -> close();
     });
   }

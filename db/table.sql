@@ -5,6 +5,7 @@ CREATE TABLE `users` (
   `name_ja` VARCHAR(50) NOT NULL,
   `name_en` VARCHAR(50) NOT NULL,
   `belong` VARCHAR(50) NOT NULL,
+  `mail` VARCHAR(256) NOT NULL,
   `timeadded` TIMESTAMP,
   PRIMARY KEY (`id`)
 );
@@ -16,12 +17,13 @@ CREATE TABLE `papers` (
   `class` VARCHAR(20) NOT NULL, -- 論文種別(卒論/修論/博論/論文(査読なし)/論文(査読あり))
   `title_ja` VARCHAR(256),
   `title_en` VARCHAR(256),
-  `file_url` VARCHAR(256) NOT NULL,
+  `file_name` VARCHAR(36) NOT NULL,
   `description_ja` TEXT,
   `description_en` TEXT,
   `keywords` VARCHAR(256),
+  `timeadded` TIMESTAMP,
   -- `publicity` INT(1),
-  `mail` VARCHAR(256),
+  FOREIGN KEY (`user_id`) REFERENCES users(`id`),
   PRIMARY KEY (`id`)
 );
 

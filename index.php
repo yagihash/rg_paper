@@ -25,19 +25,19 @@ require_once (__DIR__ . "/common.php");
           Class for thesis:
           <div class="radio">
             <label>
-              <input type="radio" name="class" required />
+              <input type="radio" name="class" value="Bachelor thesis" required />
               Bachelor thesis </label>
             <label>
-              <input type="radio" name="class" required />
+              <input type="radio" name="class" value="Master thesis" required />
               Master thesis </label>
             <label>
-              <input type="radio" name="class" required />
+              <input type="radio" name="class" value="Doctor thesis" required />
               Doctor thesis </label>
             <label>
-              <input type="radio" name="class" required />
+              <input type="radio" name="class" value="Other(with peer review)" required />
               Other(with peer review) </label>
             <label>
-              <input type="radio" name="class" required />
+              <input type="radio" name="class" value="Other(without peer review)" required />
               Other(without peear review) </label>
           </div>
         </div>
@@ -63,8 +63,10 @@ require_once (__DIR__ . "/common.php");
           </label>
         </div>
         <div class="form_item">
-          <label><span class="styled_label">Description(ja):</span>             <textarea name="description_ja" placeholder="Ex.) fugahogeのためのhogefugaを実装し、提案する。"></textarea> </label>
-          <label><span class="styled_label">Description(en/other):</span>             <textarea name="description_en" placeholder="Ex.) Implement hogefuga for fugahoge."></textarea> </label>
+          <label><span class="styled_label">Description(ja):</span>
+            <textarea name="description_ja" placeholder="Ex.) fugahogeのためのhogefugaを実装し、提案する。"></textarea> </label>
+          <label><span class="styled_label">Description(en/other):</span>
+            <textarea name="description_en" placeholder="Ex.) Implement hogefuga for fugahoge."></textarea> </label>
         </div>
         <div class="form_item">
           <label><span class="styled_label">Keywords(4-6):</span>
