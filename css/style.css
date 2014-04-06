@@ -1,1 +1,16 @@
 @charset "UTF-8";
+
+* {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  color: #333;
+}
+
+div#wrap {
+  width: 800px;
+  margin: auto;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
