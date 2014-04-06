@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set("Asia/Tokyo");
 
-$headers = array("Content-Type" => "text/html; charset=UTF-8", "Content-Security-Policy" => "default-src 'self'; style-src 'self' 'unsafe-inline'", "X-XSS-Protection" => "1; mode=block", "X-Content-Type-Options" => "nosniff", "X-Frame-Options" => "deny");
+$headers = array("Content-Type" => "text/html; charset=UTF-8", "Content-Security-Policy" => "default-src 'self'; style-src 'self' 'unsafe-inline'", "X-XSS-Protection" => "1; mode=block", "X-Content-Type-Options" => "nosniff", "X-Frame-Options" => "DENY");
 foreach ($headers as $key => $val)
   header("{$key}: {$val}");
 
