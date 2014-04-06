@@ -47,7 +47,7 @@ class DBreader {
     $table = $this -> link -> real_escape_string($table);
     $column = $this -> link -> real_escape_string($column);
     $stmt = $this -> link -> prepare("SELECT * FROM `$table` WHERE `$column`=?");
-    $stmt -> bind_param("i", $needle);
+    $stmt -> bind_param("s", $needle);
     $stmt -> execute();
     $result = $this -> fetchAll($stmt);
     $stmt -> close();

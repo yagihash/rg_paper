@@ -210,7 +210,7 @@ class DBwriter {
       } else if ($file['size'] > 1000000) {
         throw new Exception("Uploaded file is too large.");
       } else {
-        if (move_uploaded_file($file["tmp_name"], ($file_path = "./files/" . bin2hex(openssl_random_pseudo_bytes(32)) . ".pdf"))) {
+        if (move_uploaded_file($file["tmp_name"], ($file_path = "./files/" . bin2hex(openssl_random_pseudo_bytes(16)) . ".pdf"))) {
           chmod($file_path, 0644);
           $file_name = basename($file_path);
         } else {

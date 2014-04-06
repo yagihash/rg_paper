@@ -1,4 +1,6 @@
+DROP TABLE IF EXISTS `papers`;
 DROP TABLE IF EXISTS `users`;
+
 CREATE TABLE `users` (
   `id` BIGINT(10) NOT NULL AUTO_INCREMENT,
   `login_name` VARCHAR(12) NOT NULL UNIQUE,
@@ -10,7 +12,6 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`)
 );
 
-DROP TABLE IF EXISTS `papers`;
 CREATE TABLE `papers` (
   `id` BIGINT(10) NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT(10) NOT NULL,
