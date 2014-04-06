@@ -197,6 +197,8 @@ class DBwriter {
         throw new Exception("Mail address is required.");
       } else if (strlen($paper["mail"]) > 256) {
         throw new Exception("Mail address is too long.");
+      } else if (!preg_match('/^(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:"(?:\\[^\r\n]|[^\\"])*")))\@(?:(?:(?:(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_!#\$\%&\'*+\/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$/', $paper["mail"])) {
+        throw new Exception("Invalid mail address format.");
       } else {
         $mail = $paper["mail"];
       }
