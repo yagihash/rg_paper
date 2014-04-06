@@ -14,3 +14,47 @@ div#wrap {
   padding-top: 30px;
   padding-bottom: 30px;
 }
+
+form#uploader div.form_item {
+  margin: 20px;
+}
+
+div.radio {
+  display: block;
+  margin-left: 185px;
+  margin-top: -1.8em;
+}
+
+div.form_item label {
+  display: block;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+div.form_item label input[type=text], div.form_item label input[type=email] {
+  width: 350px;
+}
+
+div.form_item label span.styled_label {
+  display: inline-block;
+  width: 180px;
+}
+
+div.form_item label textarea {
+  display: block;
+  margin-left: 185px;
+  margin-top: -1.5em;
+  width: 350px;
+  height: 100px;
+  resize: none;
+}
+
+div#keywords_box {
+  margin-left: 185px;
+  margin-top: -1.5em;
+}
+
+div#keywords_box input.keywords {
+  margin-bottom: 5px;
+  display: block;
+}
