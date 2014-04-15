@@ -3,7 +3,7 @@ require_once (__DIR__ . "/common.php");
 
 $file_name = isset($_GET["f"]) ? $_GET["f"] : "";
 if(preg_match("/[^a-f0-9]/", substr($file_name, 0, -4))) {
-  echo substr($file_name, 0, -4);
+  header("HTTP/1.1 403 Forbidden");
   die("403 Forbidden");
 }
 $file_name = basename($file_name);

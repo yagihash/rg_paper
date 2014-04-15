@@ -60,7 +60,7 @@ endforeach;
           <span class="label">Mail:</span><span class="mail"><?php echo escapeHTML($user["mail"]); ?></span>
         </div>
         <div class="paper_item">
-          <span class="label">File:</span><span class="file"><a href="./file.php?file=<?php echo escapeHTML($paper["file_name"]) ?>">FILE</a></span>
+          <span class="label">File:</span><span class="file"><a href="./file.php?f=<?php echo escapeHTML($paper["file_name"]) ?>">FILE</a></span>
         </div>
       </div>
       <hr />
