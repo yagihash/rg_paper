@@ -58,3 +58,68 @@ div#keywords_box input.keywords {
   margin-bottom: 5px;
   display: block;
 }
+
+hr {
+  width: 800px;
+  height: 0px;
+  border: dashed 1px #D0D0D0;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+div.paper {
+  width: 800px;
+}
+
+div.paper_item {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+div.paper_item span.label {
+  display: inline-block;
+  width: 140px;
+  font-weight: bold;
+  text-align: right;
+  padding-right: 10px;
+}
+
+span.ja {
+  display: inline-block;
+  margin-right: 5px;
+}
+
+span.en {
+  display: inline-block;
+  margin-left: 5px;
+}
+
+p.description {
+  display: inline-block;
+  margin-right: 10px;
+  width: 300px;
+  height: 100px;
+  overflow: scroll;
+  padding: 2px;
+}
+
+p.description.ja {
+  margin-left: 150px;
+}
+
+div.description {
+  display: block;
+  width: 140px;
+  text-align: right;
+  padding-right: 10px;
+  font-weight: bold;
+}
+
+div.paper_item ul.keywords {
+  display: inline;
+}
+
+div.paper_item ul.keywords li {
+  display: inline-block;
+  margin-right: 5px;
+}

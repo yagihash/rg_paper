@@ -17,7 +17,7 @@ class DBwriter {
     $this -> link = new mysqli($host, $user, $pass, $db);
     if ($this -> link -> connect_error)
       return false;
-    if(!$this -> link -> set_charset("utf8"))
+    if (!$this -> link -> set_charset("utf8"))
       die("Couldn't change encoding to utf8");
 
     // オートコミットオフ
@@ -172,7 +172,7 @@ class DBwriter {
       } else {
         $user_id = $paper["user_id"];
       }
-      
+
       // 論文種別のチェック
       if (!isset($paper["class"]) or $paper["class"] === false) {
         throw new Exception("The class of paper is required. Bachelar/Master/Doctor thesis or Other paper(with pear review or not)");

@@ -54,9 +54,9 @@ class DBreader {
     return $result;
   }
 
-  public function getUser($userid) {
-    $result = $this -> get_data($userid, "users", "id");
-    return $result;
+  public function getUser($user_id) {
+    $result = $this -> getData($user_id, "users", "id");
+    return $result[0];
   }
   
   public function doesExistsUser($login_name) {
