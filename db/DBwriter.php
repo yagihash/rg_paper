@@ -15,10 +15,10 @@ class DBwriter {
 
   public function __construct($host, $user, $pass, $db) {
     $this -> link = new mysqli($host, $user, $pass, $db);
-    if ($this -> link -> connect_error) {
+    if ($this -> link -> connect_error)
       return false;
-    }
-    $this -> link -> set_charset("utf8");
+    if(!$this -> link -> set_charset("utf8"))
+      die("Couldn't change encoding to utf8");
 
     // オートコミットオフ
     // transactQueryにクエリを投げる関数をぶん投げてあげるように

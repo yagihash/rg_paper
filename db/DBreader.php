@@ -12,10 +12,10 @@ class DBreader {
 
   public function __construct($host, $user, $pass, $db) {
     $this -> link = new mysqli($host, $user, $pass, $db);
-    if ($this -> link -> connect_error) {
+    if ($this -> link -> connect_error)
       return false;
-    }
-    $this -> link -> set_charset("utf8");
+    if(!$this -> link -> set_charset("utf8"))
+      die("Couldn't change encoding to utf8");
   }
 
   public function __destruct() {
@@ -76,4 +76,11 @@ class DBreader {
     return $this -> getData($login_name, "users", "login_name");
   }
 
+  public function getPapers($limit=false, $offset=false) {
+    $stmt = $this -> link -> prepare("SELECT * FROM `papers`");
+    $stmt -> execute();
+    $result = $this -> fetchAll($stmt);
+    $stmt -> close();
+    return $result;
+  }
 }
